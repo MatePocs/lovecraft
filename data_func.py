@@ -1,39 +1,25 @@
-import io
+from io import StringIO
 
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.layout import LAParams
+from pdfminer.pdfdocument import PDFDocument
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfparser import PDFParser
 
+def convert_pdf_to_string(file_path):
 
-def convert_pdf_to_txt(path):
-    '''Convert pdf content from a file path to text
+	output_string = StringIO()
+	with open(file_path, 'rb') as in_file:
+	    parser = PDFParser(in_file)
+	    doc = PDFDocument(parser)
+	    rsrcmgr = PDFResourceManager()
+	    device = TextConverter(rsrcmgr, output_string, laparams=LAParams())
+	    interpreter = PDFPageInterpreter(rsrcmgr, device)
+	    for page in PDFPage.create_pages(doc):
+	        interpreter.process_page(page)
 
-    :path the file path
-    '''
-    rsrcmgr = PDFResourceManager()
-    codec = 'utf-8'
-    laparams = LAParams()
-
-    with io.StringIO() as retstr:
-        with TextConverter(rsrcmgr, retstr, codec=codec,
-                           laparams=laparams) as device:
-            with open(path, 'rb') as fp:
-                interpreter = PDFPageInterpreter(rsrcmgr, device)
-                password = ""
-                maxpages = 0
-                caching = True
-                pagenos = set()
-
-                for page in PDFPage.get_pages(fp,
-                                              pagenos,
-                                              maxpages=maxpages,
-                                              password=password,
-                                              caching=caching,
-                                              check_extractable=True):
-                    interpreter.process_page(page)
-
-                return retstr.getvalue()
+	return(output_string.getvalue())
 
                 
 def convert_title_to_filename(title):
@@ -42,7 +28,7 @@ def convert_title_to_filename(title):
     return filename
 
 
- def split_to_title_and_pagenum(table_of_contents_entry):
+def split_to_title_and_pagenum(table_of_contents_entry):
     title_and_pagenum = table_of_contents_entry.strip()
     
     title = None
